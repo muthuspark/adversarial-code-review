@@ -6,40 +6,57 @@
 <title>advreview</title>
 <style>
   :root {
-    --bg: #f6f7f9; --panel: #fff; --border: #d9dde3; --text: #1f2328; --muted: #656d76;
-    --accent: #0969da; --crit: #a40e26; --high: #cf222e; --med: #9a6700; --ok: #1a7f37;
-    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    --bg: #f6f6f6; --panel: #fff; --border: #e5e5e5; --text: #141414; --muted: #4f4f52;
+    --accent: #141414; --crit: #a40e26; --high: #cf222e; --med: #9a6700; --ok: #1a7f37;
+    --font-gt-america: 'GT America', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-ui-monospace-monospace: 'ui-monospace / monospace', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --font-monospace: 'monospace', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --mono: var(--font-monospace);
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color: var(--text); background: var(--bg); }
-  header { background: var(--panel); border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; align-items: center; gap: 16px; }
-  header h1 { font-size: 16px; margin: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body { margin: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr); font: 14px/1.38 var(--font-gt-america); color: var(--text); background: var(--bg); }
+  header { min-height: 44px; background: var(--panel); border-bottom: 1px solid var(--border); padding: 6px 14px; display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 15px; margin: 0; }
   header .sub { color: var(--muted); font-size: 12px; }
   header .right { margin-left: auto; display: flex; gap: 10px; align-items: center; font-size: 12px; }
-  select { font: 12px inherit; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; max-width: 360px; }
+  select { font: inherit; font-size: 12px; padding: 3px 6px; border: 1px solid var(--border); border-radius: 4px; max-width: 360px; }
 
-  .input { background: var(--panel); border-bottom: 1px solid var(--border); padding: 14px 20px; display: grid; grid-template-columns: 1fr 280px; gap: 16px; }
+  .input { min-height: 0; }
+  .input h2 { font-size: 13px; margin: 0; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .input .entry { display: flex; flex-direction: column; gap: 8px; padding: 12px; min-height: 0; flex: 1; }
+  .input .entry > div { display: flex; flex-direction: column; gap: 8px; min-height: 0; flex: 1; }
   textarea { width: 100%; height: 140px; font: 12.5px/1.5 var(--mono); padding: 10px; border: 1px solid var(--border); border-radius: 6px; resize: vertical; }
-  .opts { display: flex; flex-direction: column; gap: 10px; }
-  .btn { background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 9px 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .input textarea { flex: 1; min-height: 0; resize: none; border-radius: 4px; }
+  .input #codebase { padding: 5px 7px !important; border-color: var(--border) !important; border-radius: 4px !important; }
+  .helper { margin: 0; border-top: 1px solid var(--border); padding-top: 6px; }
+  .helper summary { cursor: pointer; font-size: 12px; color: var(--muted); }
+  .helper p { margin: 5px 0 0; }
+  .opts { display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; border-top: 1px solid var(--border); }
+  .btn { background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 7px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
   .btn.secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
   .btn.small { padding: 5px 10px; font-size: 12px; }
+  .btn:hover:not(:disabled) { filter: brightness(1.15); }
+  .btn:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid #69bee2; outline-offset: 2px; }
   .btn:disabled { opacity: .5; cursor: default; }
   .hint { font-size: 12px; color: var(--muted); }
   .err { color: var(--high); font-size: 12.5px; }
 
-  .groups { padding: 0 20px; background: var(--panel); border-bottom: 1px solid var(--border); display: flex; gap: 4px; min-height: 38px; }
-  .tab { padding: 10px 14px; border-bottom: 2px solid transparent; cursor: pointer; font-size: 13px; }
+  .groups { min-width: 0; padding: 0 14px; background: var(--panel); border-bottom: 1px solid var(--border); display: flex; gap: 4px; min-height: 38px; }
+  .tab { padding: 8px 10px; border-bottom: 2px solid transparent; cursor: pointer; font-size: 13px; }
   .tab.active { border-color: var(--accent); font-weight: 600; }
   .tab .st { font-size: 11px; color: var(--muted); margin-left: 6px; font-weight: 400; }
   .tab .st.running { color: var(--accent); }
   .tab .st.done { color: var(--ok); }
   .tab .st.error { color: var(--high); }
 
-  main { display: grid; grid-template-columns: 440px 1fr; gap: 16px; padding: 16px 20px; height: calc(100vh - 300px); min-height: 520px; }
-  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; display: flex; flex-direction: column; min-height: 0; }
+  main { min-height: 0; overflow: hidden; display: grid; grid-template-columns: minmax(260px, 0.82fr) minmax(0, 1.45fr) minmax(0, 1fr); gap: 10px; padding: 10px 14px 12px; }
+  @media (max-width: 980px) { main { grid-template-columns: 240px 420px 320px; overflow-x: auto; } }
+  @media (max-height: 680px) { .input .opts { gap: 5px; padding: 7px 10px; } .input .entry { padding: 9px; } .panel h2, .input h2 { padding-top: 7px; padding-bottom: 7px; } }
+  @media (max-width: 700px) { header .sub { display: none; } .groups { overflow-x: auto; } }
+  .panel { min-width: 0; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; display: flex; flex-direction: column; min-height: 0; }
   .panel h2 { font-size: 13px; margin: 0; padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
-  .panel .body { overflow: auto; padding: 10px 14px; flex: 1; }
+  .panel .body { min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 10px 12px; flex: 1; }
   .empty { color: var(--muted); font-size: 13px; padding: 20px; text-align: center; }
 
   .phase { margin: 10px 0 4px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; display: flex; justify-content: space-between; }
@@ -106,10 +123,16 @@
   </div>
 </header>
 
-<section class="input">
+<nav class="groups" id="tabs"></nav>
+
+<main>
+<section class="panel input">
+  <h2>PR input</h2>
+  <div class="entry">
   <div>
     <textarea id="text" placeholder="Paste PR links, one per line. All of them are reviewed together as one dependent set. A plain text line names the set."></textarea>
     <div class="hint" id="parsed">Paste PR links. All of them are reviewed together as one dependent set.</div>
+  </div>
   </div>
   <div class="opts">
     <label class="hint" style="display:flex;flex-direction:column;gap:4px">Codebase root (all platform repos)
@@ -117,21 +140,15 @@
       <span id="codebaseInfo"></span>
     </label>
     <button class="btn" id="go" disabled>Review</button>
-    <span class="hint">Read-only review: the reviewer only reads code and git history, never runs it.</span>
-    <span class="hint">Include the spec PR (OpenSpec change) in the group so requirements get validated.</span>
-    <span class="hint">Every repo under the codebase root is searched for consumers of what the PRs change, PR or not.</span>
-    <span class="hint">About 25 min for 6 to 7 PRs.</span>
+    <details class="helper"><summary>Review details</summary>
+      <p class="hint">Read-only: the reviewer reads code and git history, never runs it.</p>
+      <p class="hint">Include the spec PR (OpenSpec change) so requirements get validated.</p>
+      <p class="hint">Every repo under the codebase root is searched for consumers, whether they have a PR or not.</p>
+      <p class="hint">About 25 min for 6 to 7 PRs.</p>
+    </details>
     <span class="err" id="error"></span>
   </div>
 </section>
-
-<nav class="groups" id="tabs"></nav>
-
-<main>
-  <div class="panel">
-    <h2>Trace <span class="cost" id="cost"></span></h2>
-    <div class="body" id="trace"><div class="empty">No run yet.</div></div>
-  </div>
   <div class="panel">
     <h2>Report
       <div class="actions">
@@ -141,8 +158,12 @@
     </h2>
     <div class="body" id="report"><div class="empty">The report appears here when a group finishes.</div></div>
   </div>
-</main>
+  <div class="panel">
+    <h2>Trace <span class="cost" id="cost"></span></h2>
+    <div class="body" id="trace"><div class="empty">No run yet.</div></div>
+  </div>
 
+</main>
 <dialog id="dlg">
   <div class="dh" id="dlgTitle"></div>
   <div class="db">
