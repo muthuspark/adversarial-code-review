@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>advreview</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #fff; --border: #d9dde3; --text: #1f2328; --muted: #656d76;
+    --accent: #0969da; --crit: #a40e26; --high: #cf222e; --med: #9a6700; --ok: #1a7f37;
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color: var(--text); background: var(--bg); }
+  header { background: var(--panel); border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 16px; margin: 0; }
+  header .sub { color: var(--muted); font-size: 12px; }
+  header .right { margin-left: auto; display: flex; gap: 10px; align-items: center; font-size: 12px; }
+  select { font: 12px inherit; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; max-width: 360px; }
+
+  .input { background: var(--panel); border-bottom: 1px solid var(--border); padding: 14px 20px; display: grid; grid-template-columns: 1fr 280px; gap: 16px; }
+  textarea { width: 100%; height: 140px; font: 12.5px/1.5 var(--mono); padding: 10px; border: 1px solid var(--border); border-radius: 6px; resize: vertical; }
+  .opts { display: flex; flex-direction: column; gap: 10px; }
+  .btn { background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 9px 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn.secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
+  .btn.small { padding: 5px 10px; font-size: 12px; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .hint { font-size: 12px; color: var(--muted); }
+  .err { color: var(--high); font-size: 12.5px; }
+
+  .groups { padding: 0 20px; background: var(--panel); border-bottom: 1px solid var(--border); display: flex; gap: 4px; min-height: 38px; }
+  .tab { padding: 10px 14px; border-bottom: 2px solid transparent; cursor: pointer; font-size: 13px; }
+  .tab.active { border-color: var(--accent); font-weight: 600; }
+  .tab .st { font-size: 11px; color: var(--muted); margin-left: 6px; font-weight: 400; }
+  .tab .st.running { color: var(--accent); }
+  .tab .st.done { color: var(--ok); }
+  .tab .st.error { color: var(--high); }
+
+  main { display: grid; grid-template-columns: 440px 1fr; gap: 16px; padding: 16px 20px; height: calc(100vh - 300px); min-height: 520px; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; display: flex; flex-direction: column; min-height: 0; }
+  .panel h2 { font-size: 13px; margin: 0; padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .panel .body { overflow: auto; padding: 10px 14px; flex: 1; }
+  .empty { color: var(--muted); font-size: 13px; padding: 20px; text-align: center; }
+
+  .phase { margin: 10px 0 4px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; display: flex; justify-content: space-between; }
+  .ev { display: grid; grid-template-columns: 54px 18px 1fr; gap: 6px; font: 12px/1.5 var(--mono); padding: 2px 0; }
+  .ev .t { color: var(--muted); }
+  .ev .i { text-align: center; }
+  .ev .m { white-space: pre-wrap; word-break: break-word; }
+  .ev.tool .m { color: #57606a; }
+  .ev.text .m { color: #6e40c9; font-family: inherit; font-style: italic; }
+  .ev.ok .m, .ev.done .m { color: var(--ok); }
+  .ev.warn .m { color: var(--med); }
+  .ev.error .m { color: var(--high); }
+  .ev.verdict.REFUTED .m { color: var(--med); }
+  .ev.verdict.CONFIRMED .m { color: var(--ok); }
+  .ev.verdict.UNCERTAIN .m { color: var(--muted); }
+  .spin { display: inline-block; width: 10px; height: 10px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: s 1s linear infinite; vertical-align: middle; margin-right: 4px; }
+  @keyframes s { to { transform: rotate(360deg); } }
+  .cost { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-left: auto; }
+
+  .summary { font-size: 13.5px; white-space: pre-wrap; }
+  .section { margin-top: 16px; }
+  .section h3 { font-size: 13px; margin: 0 0 8px; }
+  .prs { font-size: 12.5px; }
+  .prs a { color: var(--accent); text-decoration: none; }
+  table.spec { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+  table.spec td { padding: 5px 8px; border-top: 1px solid var(--border); vertical-align: top; }
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 11px; font-weight: 600; font-family: var(--mono); white-space: nowrap; }
+  .met { background: #dafbe1; color: var(--ok); }
+  .partial { background: #fff8c5; color: var(--med); }
+  .missing { background: #ffebe9; color: var(--high); }
+  .contradicted { background: var(--high); color: #fff; }
+  .sev { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 11px; font-weight: 700; color: #fff; }
+  .sev.critical { background: var(--crit); } .sev.high { background: var(--high); } .sev.medium { background: var(--med); } .sev.refuted { background: #8c959f; }
+  .flag { font-size: 10.5px; font-weight: 600; color: #8250df; border: 1px solid #d8b9ff; border-radius: 4px; padding: 0 5px; }
+  .finding { border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; }
+  .finding summary { padding: 9px 12px; cursor: pointer; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; list-style: none; }
+  .finding summary::-webkit-details-marker { display: none; }
+  .finding .loc { font: 11.5px var(--mono); color: var(--muted); width: 100%; }
+  .finding .det { padding: 0 12px 12px; font-size: 13px; border-top: 1px solid var(--border); }
+  .finding .det p { margin: 8px 0; white-space: pre-wrap; }
+  .finding .det b { color: var(--muted); font-weight: 600; }
+  .finding.refuted summary b { color: var(--muted); font-weight: 400; }
+  .verdict { font: 11px var(--mono); padding: 1px 6px; border-radius: 4px; background: #dafbe1; color: var(--ok); }
+  .verdict.UNCERTAIN { background: #fff8c5; color: var(--med); }
+  .verdict.unverified { background: #eaeef2; color: var(--muted); }
+  .posted { font-size: 11px; color: var(--ok); }
+  .actions { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+
+  dialog { border: 1px solid var(--border); border-radius: 8px; padding: 0; width: 720px; max-width: 95vw; }
+  dialog .dh { padding: 10px 14px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 13px; }
+  dialog .db { padding: 14px; }
+  dialog textarea { height: 260px; }
+  dialog .df { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+  dialog::backdrop { background: rgba(0,0,0,.3); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>advreview</h1>
+  <span class="sub">adversarial PR review · local claude CLI · read-only · nothing posts without your OK</span>
+  <div class="right">
+    <label>History <select id="history"><option value="">past sessions…</option></select></label>
+  </div>
+</header>
+
+<section class="input">
+  <div>
+    <textarea id="text" placeholder="Paste PR links, one per line. All of them are reviewed together as one dependent set. A plain text line names the set."></textarea>
+    <div class="hint" id="parsed">Paste PR links. All of them are reviewed together as one dependent set.</div>
+  </div>
+  <div class="opts">
+    <label class="hint" style="display:flex;flex-direction:column;gap:4px">Codebase root (all platform repos)
+      <input type="text" id="codebase" style="font:12px var(--mono);padding:6px;border:1px solid var(--border);border-radius:6px;width:100%">
+      <span id="codebaseInfo"></span>
+    </label>
+    <button class="btn" id="go" disabled>Review</button>
+    <span class="hint">Read-only review: the reviewer only reads code and git history, never runs it.</span>
+    <span class="hint">Include the spec PR (OpenSpec change) in the group so requirements get validated.</span>
+    <span class="hint">Every repo under the codebase root is searched for consumers of what the PRs change, PR or not.</span>
+    <span class="hint">About 25 min for 6 to 7 PRs.</span>
+    <span class="err" id="error"></span>
+  </div>
+</section>
+
+<nav class="groups" id="tabs"></nav>
+
+<main>
+  <div class="panel">
+    <h2>Trace <span class="cost" id="cost"></span></h2>
+    <div class="body" id="trace"><div class="empty">No run yet.</div></div>
+  </div>
+  <div class="panel">
+    <h2>Report
+      <div class="actions">
+        <button class="btn secondary small" id="openmd" disabled>Copy report.md</button>
+        <button class="btn small" id="postsel" disabled>Post 0 selected…</button>
+      </div>
+    </h2>
+    <div class="body" id="report"><div class="empty">The report appears here when a group finishes.</div></div>
+  </div>
+</main>
+
+<dialog id="dlg">
+  <div class="dh" id="dlgTitle"></div>
+  <div class="db">
+    <div class="hint" id="dlgLoc" style="margin-bottom:8px"></div>
+    <textarea id="dlgBody"></textarea>
+  </div>
+  <div class="df">
+    <span class="hint" id="dlgProgress"></span>
+    <button class="btn secondary" id="dlgSkip">Skip</button>
+    <button class="btn secondary" id="dlgCancel">Stop</button>
+    <button class="btn" id="dlgPost">Post this comment</button>
+  </div>
+</dialog>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+let run = null;            // {id, groups:[...]} from the server
+let active = 0;            // active group index
+let traces = {};           // group index -> [events]
+let sessions = {};         // group index -> loaded session data
+let es = null;
+
+// ---------- input parsing preview
+let parseTimer;
+$("#text").addEventListener("input", () => {
+  clearTimeout(parseTimer);
+  parseTimer = setTimeout(previewParse, 250);
+});
+async function previewParse() {
+  const text = $("#text").value;
+  if (!text.trim()) { $("#parsed").textContent = "Paste PR links. All of them are reviewed together as one dependent set."; $("#go").disabled = true; return; }
+  const r = await fetch("/api/parse?text=" + encodeURIComponent(text));
+  const groups = await r.json();
+  const n = groups.reduce((a, g) => a + g.prs.length, 0);
+  if (!n) { $("#parsed").textContent = "No PR links recognised yet."; $("#go").disabled = true; return; }
+  $("#parsed").innerHTML = `Parsed: <b>${n} PR${n > 1 ? "s" : ""}</b>, one group${groups[0].label ? " · " + esc(groups[0].label) : ""} · reviewed together in one context`;
+  $("#go").textContent = `Review ${n} PR${n > 1 ? "s" : ""}`;
+  $("#go").disabled = !$("#codebaseInfo").dataset.ok;
+}
+
+// ---------- codebase root
+let cbTimer;
+async function checkCodebase() {
+  const cb = $("#codebase").value.trim();
+  const r = await fetch("/api/config?codebase=" + encodeURIComponent(cb));
+  const c = await r.json();
+  $("#codebaseInfo").innerHTML = c.exists ? `${c.repos} repos found` : '<span class="err">directory not found</span>';
+  $("#codebaseInfo").dataset.ok = c.exists ? "1" : "";
+  try { localStorage.setItem("advreview.codebase", cb); } catch (e) {}
+  previewParse();
+}
+$("#codebase").addEventListener("input", () => { clearTimeout(cbTimer); cbTimer = setTimeout(checkCodebase, 300); });
+(async () => {
+  let saved = null; try { saved = localStorage.getItem("advreview.codebase"); } catch (e) {}
+  const c = await (await fetch("/api/config")).json();
+  $("#codebase").value = saved || c.codebase;
+  checkCodebase();
+})();
+
+// ---------- start a run
+$("#go").addEventListener("click", async () => {
+  $("#error").textContent = "";
+  $("#go").disabled = true;
+  const r = await fetch("/api/review", { method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ text: $("#text").value, codebase: $("#codebase").value.trim() }) });
+  const data = await r.json();
+  if (!r.ok) { $("#error").textContent = data.error; $("#go").disabled = false; return; }
+  run = data; traces = {}; sessions = {}; active = 0;
+  run.groups.forEach(g => traces[g.index] = []);
+  renderTabs(); renderTrace(); renderReport();
+  subscribe();
+});
+
+function subscribe() {
+  if (es) es.close();
+  es = new EventSource(`/api/events?id=${run.id}`);
+  es.onmessage = e => {
+    const ev = JSON.parse(e.data);
+    if (ev.kind === "run_done") { es.close(); $("#go").disabled = false; return; }
+    const g = run.groups[ev.group];
+    if (ev.kind === "status") {
+      g.status = ev.status; if (ev.session) g.session = ev.session; if (ev.findings != null) g.findings = ev.findings;
+      renderTabs();
+      if (ev.status === "done" || ev.status === "error") loadSession(ev.group);
+      return;
+    }
+    traces[ev.group].push(ev);
+    if (ev.group === active) { appendEvent(ev); updateCost(); }
+    if (ev.kind === "verdict") { g.progress = `verifying ${ev.done}/${ev.total}`; renderTabs(); }
+    else if (ev.phase === "hunt" && !g.progress) { g.progress = "hunting"; renderTabs(); }
+  };
+  es.onerror = () => { /* browser auto-reconnects with Last-Event-ID */ };
+}
+
+async function loadSession(gi) {
+  const g = run.groups[gi];
+  if (!g.session) return;
+  const r = await fetch("/api/session?name=" + encodeURIComponent(g.session));
+  sessions[gi] = await r.json();
+  if (gi === active) renderReport();
+  refreshHistory();
+}
+
+// ---------- tabs
+function renderTabs() {
+  if (!run) { $("#tabs").innerHTML = ""; return; }
+  $("#tabs").innerHTML = run.groups.map(g => {
+    let st = g.status;
+    if (st === "running") st = `<span class="spin"></span>${g.progress || "checking out"}`;
+    else if (st === "done") st = `done · ${g.findings} finding${g.findings === 1 ? "" : "s"}`;
+    else if (st === "error") st = "failed";
+    return `<div class="tab ${g.index === active ? "active" : ""}" data-i="${g.index}">
+      ${esc(g.label || `Group ${g.index + 1}`)} <span class="st ${g.status}">${st}</span></div>`;
+  }).join("");
+  document.querySelectorAll(".tab").forEach(t => t.onclick = () => { active = +t.dataset.i; renderTabs(); renderTrace(); renderReport(); });
+}
+
+// ---------- trace
+const PHASES = { checkout: "Checkout", hunt: "Hunt pass", verify: "Verify pass", done: "Done" };
+const ICON = { info: "·", ok: "✓", warn: "!", error: "✗", tool: "▸", text: "💭", verdict: "✓", done: "✓" };
+function renderTrace() {
+  const box = $("#trace"); box.innerHTML = ""; lastPhase = null;
+  const evs = traces[active] || [];
+  if (!evs.length) { box.innerHTML = '<div class="empty">Waiting for events…</div>'; return; }
+  evs.forEach(appendEvent); updateCost();
+}
+let lastPhase = null;
+function appendEvent(ev) {
+  const box = $("#trace");
+  if (box.querySelector(".empty")) { box.innerHTML = ""; lastPhase = null; }
+  if (ev.phase && ev.phase !== lastPhase) {
+    box.insertAdjacentHTML("beforeend", `<div class="phase"><span>${PHASES[ev.phase] || ev.phase}</span></div>`);
+    lastPhase = ev.phase;
+  }
+  let icon = ICON[ev.kind] || "·";
+  if (ev.kind === "verdict") icon = ev.verdict === "REFUTED" ? "✗" : ev.verdict === "UNCERTAIN" ? "?" : "✓";
+  const tag = ev.tag && ev.tag !== "hunt" && ev.kind === "tool" ? `[${ev.tag}] ` : "";
+  box.insertAdjacentHTML("beforeend",
+    `<div class="ev ${ev.kind} ${ev.verdict || ""}"><span class="t">${ev.ts}</span><span class="i">${icon}</span><span class="m">${esc(tag + ev.msg)}</span></div>`);
+  box.scrollTop = box.scrollHeight;
+}
+function updateCost() {
+  const evs = traces[active] || [];
+  const cost = evs.reduce((a, e) => a + (e.cost || 0), 0);
+  const tools = evs.filter(e => e.kind === "tool").length;
+  $("#cost").textContent = (cost ? `$${cost.toFixed(2)} · ` : "") + `${tools} tool calls`;
+}
+
+// ---------- report
+function renderReport() {
+  const s = sessions[active];
+  const box = $("#report");
+  $("#openmd").disabled = !s; $("#postsel").disabled = true; $("#postsel").textContent = "Post 0 selected…";
+  if (!s) {
+    const g = run && run.groups[active];
+    box.innerHTML = `<div class="empty">${g && g.status === "error" ? "<span class='err'>" + esc(g.error) + "</span>" : "The report appears here when this group finishes."}</div>`;
+    return;
+  }
+  const r = s.findings;
+  const live = r.findings.filter(f => verdict(f) !== "REFUTED");
+  const dead = r.findings.filter(f => verdict(f) === "REFUTED");
+  const spec = r.spec;
+  const counts = {};
+  spec.requirements.forEach(q => counts[q.status] = (counts[q.status] || 0) + 1);
+  box.innerHTML = `
+    <div class="hint">codebase root: ${esc(r.codebase || "")}</div>
+    <div class="prs">${r.prs.map(p => `<a href="${esc(p.url)}" target="_blank">${esc(p.repo)}#${p.number}</a> ${esc(p.title)}`).join(" · ")}</div>
+    <div class="section"><h3>Summary</h3><div class="summary">${esc(r.summary)}</div></div>
+    ${r.cross_pr_notes && r.cross_pr_notes.trim() ? `<div class="section"><h3>Cross-PR contract check</h3><div class="summary">${esc(r.cross_pr_notes)}</div></div>` : ""}
+    <div class="section"><h3>Spec compliance <span class="hint">· ${spec.found ? esc(spec.source) + " · " + Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(", ") : "no spec found in PR bodies or diffs"}</span></h3>
+      ${spec.found ? `<table class="spec">${spec.requirements.map(q => `<tr><td><span class="pill ${q.status}">${q.status.toUpperCase()}</span></td><td>${esc(q.id)}</td><td>${esc(q.text)}${q.status !== "met" && q.evidence ? `<br><span class="hint">${esc(q.evidence)}</span>` : ""}</td></tr>`).join("")}</table>` : ""}
+    </div>
+    <div class="section"><h3>Findings <span class="hint">· ${live.length} reported, ${dead.length} refuted</span></h3>
+      ${live.length ? live.map((f, i) => findingCard(f, i === 0)).join("") : '<div class="hint">PASS: no finding survived verification.</div>'}
+      ${dead.map(f => `<details class="finding refuted"><summary><span class="sev refuted">REFUTED</span><b>${esc(f.id)} ${esc(f.title)}</b></summary><div class="det"><p>${esc(f.verification.reasoning)}</p></div></details>`).join("")}
+    </div>
+    <div class="section hint">Posting: tick findings, click <b>Post selected</b>. Each one is shown again with an editable comment and its own confirm before it goes to GitHub as an inline review comment on the reviewed commit.</div>`;
+  box.querySelectorAll("input.sel").forEach(cb => cb.onchange = updateSel);
+}
+function verdict(f) { return f.verification ? f.verification.verdict : "unverified"; }
+function findingCard(f, open) {
+  const v = f.verification;
+  const tag = v ? `<span class="verdict ${v.verdict}">${v.verdict} ${v.confidence}%</span>` : `<span class="verdict unverified">unverified ${f.confidence}%</span>`;
+  return `<details class="finding" ${open ? "open" : ""}>
+    <summary><input type="checkbox" class="sel" data-id="${esc(f.id)}" ${f.posted_url ? "disabled" : ""}>
+      <span class="sev ${f.severity}">${f.severity.toUpperCase()}</span> ${tag}
+      <b>${esc(f.id)} ${esc(f.title)}</b>
+      ${f.cross_pr ? '<span class="flag">CROSS-PR</span>' : ""}${f.spec_gap ? '<span class="flag">SPEC-GAP</span>' : ""}${(f.affected_repos || []).map(r => `<span class="flag">AFFECTS ${esc(r)}</span>`).join("")}
+      ${f.posted_url ? `<a class="posted" href="${esc(f.posted_url)}" target="_blank">posted</a>` : ""}
+      <span class="loc">${esc(f.repo)}#${f.pr_number} · ${esc(f.file)}:${f.line} · ${esc(f.category)}</span></summary>
+    <div class="det">
+      <p>${esc(f.problem)}</p>
+      <p><b>Fails when</b> ${esc(f.failure_scenario)}</p>
+      <p><b>Evidence</b> ${esc(f.evidence)}</p>
+      ${f.suggested_fix && f.suggested_fix.trim() ? `<p><b>Fix</b> ${esc(f.suggested_fix)}</p>` : ""}
+      ${v && v.reasoning ? `<p><b>Verifier</b> ${esc(v.reasoning)}</p>` : ""}
+    </div></details>`;
+}
+function updateSel() {
+  const n = document.querySelectorAll("input.sel:checked").length;
+  $("#postsel").disabled = n === 0;
+  $("#postsel").textContent = `Post ${n} selected…`;
+}
+
+$("#openmd").addEventListener("click", async () => {
+  const s = sessions[active]; if (!s) return;
+  await navigator.clipboard.writeText(s.report_md);
+  $("#openmd").textContent = "Copied"; setTimeout(() => $("#openmd").textContent = "Copy report.md", 1500);
+});
+
+// ---------- posting, one confirm per finding
+function commentBody(f) {
+  const v = f.verification; const conf = v ? v.confidence : f.confidence;
+  let s = `**${f.severity.toUpperCase()}: ${f.title}**  _(adversarial review, confidence ${conf}%)_\n\n${f.problem}\n\n**Fails when:** ${f.failure_scenario}\n\n**Evidence:** ${f.evidence}`;
+  if (f.suggested_fix && f.suggested_fix.trim()) s += `\n\n**Suggested fix:** ${f.suggested_fix}`;
+  return s;
+}
+$("#postsel").addEventListener("click", async () => {
+  const s = sessions[active]; if (!s) return;
+  const ids = [...document.querySelectorAll("input.sel:checked")].map(cb => cb.dataset.id);
+  const queue = ids.map(id => s.findings.findings.find(f => f.id === id));
+  const dlg = $("#dlg");
+  for (let i = 0; i < queue.length; i++) {
+    const f = queue[i];
+    $("#dlgTitle").textContent = `${f.id} ${f.severity.toUpperCase()} · ${f.title}`;
+    $("#dlgLoc").textContent = `${f.repo}#${f.pr_number} · ${f.file}:${f.line} · inline comment on the reviewed commit`;
+    $("#dlgBody").value = commentBody(f);
+    $("#dlgProgress").textContent = `${i + 1} of ${queue.length}`;
+    const choice = await new Promise(res => {
+      $("#dlgPost").onclick = () => res("post"); $("#dlgSkip").onclick = () => res("skip"); $("#dlgCancel").onclick = () => res("stop");
+      dlg.showModal();
+    });
+    dlg.close();
+    if (choice === "stop") break;
+    if (choice === "skip") continue;
+    const r = await fetch("/api/post", { method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ session: run.groups[active].session, id: f.id, body: $("#dlgBody").value, confirmed: true }) });
+    const res = await r.json();
+    if (!r.ok) { alert(`Post failed for ${f.id}: ${res.error}`); continue; }
+    f.posted_url = res.url;
+  }
+  renderReport();
+});
+
+// ---------- history
+async function refreshHistory() {
+  const r = await fetch("/api/sessions"); const list = await r.json();
+  $("#history").innerHTML = '<option value="">past sessions…</option>' +
+    list.map(s => `<option value="${esc(s.session)}">${esc(s.session)} · ${esc(s.label || s.prs.slice(0, 2).join(", "))} · ${s.findings} findings</option>`).join("");
+}
+$("#history").addEventListener("change", async e => {
+  const name = e.target.value; if (!name) return;
+  if (es) es.close();
+  const r = await fetch("/api/session?name=" + encodeURIComponent(name));
+  const data = await r.json();
+  run = { id: null, groups: [{ index: 0, label: data.findings.label || name, status: "done", session: name,
+    findings: data.findings.findings.filter(f => verdict(f) !== "REFUTED").length }] };
+  active = 0; traces = { 0: data.trace }; sessions = { 0: data };
+  renderTabs(); renderTrace(); renderReport();
+});
+refreshHistory();
+</script>
+</body>
+</html>

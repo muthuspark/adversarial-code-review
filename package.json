@@ -1,0 +1,17 @@
+{
+  "name": "advreview",
+  "version": "1.0.0",
+  "description": "Adversarial review of dependent GitHub pull requests, driven by the local claude CLI. No API key, no runtime dependencies.",
+  "type": "module",
+  "bin": { "advreview": "bin/advreview.js" },
+  "main": "src/review.js",
+  "files": ["bin", "src", "prompts", "ui/index.html", "README.md", "ARCHITECTURE.md", "SPEC.md"],
+  "scripts": {
+    "start": "node bin/advreview.js serve",
+    "review": "node bin/advreview.js review",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": { "node": ">=18.17" },
+  "license": "MIT",
+  "private": true
+}

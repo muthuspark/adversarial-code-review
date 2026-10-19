@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>advreview mockup</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #fff; --border: #d9dde3; --text: #1f2328; --muted: #656d76;
+    --accent: #0969da; --crit: #a40e26; --high: #cf222e; --med: #9a6700; --ok: #1a7f37;
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; color: var(--text); background: var(--bg); }
+  header { background: var(--panel); border-bottom: 1px solid var(--border); padding: 10px 20px; display: flex; align-items: center; gap: 16px; }
+  header h1 { font-size: 16px; margin: 0; }
+  header .sub { color: var(--muted); font-size: 12px; }
+  header .acct { margin-left: auto; font-size: 12px; color: var(--muted); }
+
+  .input { background: var(--panel); border-bottom: 1px solid var(--border); padding: 14px 20px; display: grid; grid-template-columns: 1fr 260px; gap: 16px; }
+  textarea { width: 100%; height: 150px; font: 12.5px/1.5 var(--mono); padding: 10px; border: 1px solid var(--border); border-radius: 6px; resize: vertical; }
+  .opts { display: flex; flex-direction: column; gap: 10px; }
+  .opts label { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .opts input[type=text] { font: 12.5px var(--mono); padding: 6px; border: 1px solid var(--border); border-radius: 6px; width: 100%; }
+  .btn { background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 9px 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn.secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .hint { font-size: 12px; color: var(--muted); }
+
+  .groups { padding: 0 20px; background: var(--panel); border-bottom: 1px solid var(--border); display: flex; gap: 4px; }
+  .tab { padding: 10px 14px; border-bottom: 2px solid transparent; cursor: pointer; font-size: 13px; }
+  .tab.active { border-color: var(--accent); font-weight: 600; }
+  .tab .st { font-size: 11px; color: var(--muted); margin-left: 6px; }
+  .tab .st.run { color: var(--accent); }
+  .tab .st.done { color: var(--ok); }
+
+  main { display: grid; grid-template-columns: 420px 1fr; gap: 16px; padding: 16px 20px; height: calc(100vh - 330px); min-height: 520px; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; display: flex; flex-direction: column; min-height: 0; }
+  .panel h2 { font-size: 13px; margin: 0; padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .panel .body { overflow: auto; padding: 10px 14px; }
+
+  /* trace */
+  .phase { margin: 8px 0 4px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; display: flex; justify-content: space-between; }
+  .ev { display: grid; grid-template-columns: 52px 18px 1fr; gap: 6px; font: 12px/1.5 var(--mono); padding: 2px 0; }
+  .ev .t { color: var(--muted); }
+  .ev .i { text-align: center; }
+  .ev .m { white-space: pre-wrap; word-break: break-all; }
+  .ev.tool .m { color: #57606a; }
+  .ev.think .m { color: #6e40c9; font-family: inherit; font-style: italic; }
+  .ev.ok .m { color: var(--ok); }
+  .ev.warn .m { color: var(--med); }
+  .spin { display: inline-block; width: 10px; height: 10px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: s 1s linear infinite; vertical-align: middle; }
+  @keyframes s { to { transform: rotate(360deg); } }
+  .cost { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+
+  /* report */
+  .summary { font-size: 13.5px; }
+  .section { margin-top: 16px; }
+  .section h3 { font-size: 13px; margin: 0 0 8px; }
+  .prs { font-size: 12.5px; }
+  .prs a { color: var(--accent); text-decoration: none; }
+  table.spec { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+  table.spec td { padding: 5px 8px; border-top: 1px solid var(--border); vertical-align: top; }
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 11px; font-weight: 600; font-family: var(--mono); }
+  .met { background: #dafbe1; color: var(--ok); }
+  .partial { background: #fff8c5; color: var(--med); }
+  .missing { background: #ffebe9; color: var(--high); }
+  .contra { background: var(--high); color: #fff; }
+  .sev { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 11px; font-weight: 700; color: #fff; }
+  .sev.critical { background: var(--crit); } .sev.high { background: var(--high); } .sev.medium { background: var(--med); }
+  .flag { font-size: 10.5px; font-weight: 600; color: #8250df; border: 1px solid #d8b9ff; border-radius: 4px; padding: 0 5px; }
+  .finding { border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; }
+  .finding summary { padding: 9px 12px; cursor: pointer; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; list-style: none; }
+  .finding summary::-webkit-details-marker { display: none; }
+  .finding .loc { font: 11.5px var(--mono); color: var(--muted); width: 100%; }
+  .finding .det { padding: 0 12px 12px; font-size: 13px; border-top: 1px solid var(--border); }
+  .finding .det p { margin: 8px 0; }
+  .finding .det b { color: var(--muted); font-weight: 600; }
+  .finding .det code { font: 11.5px var(--mono); background: #f0f2f5; padding: 1px 4px; border-radius: 3px; }
+  .verdict { font: 11px var(--mono); padding: 1px 6px; border-radius: 4px; background: #dafbe1; color: var(--ok); }
+  .verdict.unc { background: #fff8c5; color: var(--med); }
+  .refuted { color: var(--muted); font-size: 12.5px; }
+  .actions { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+  .check { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-left: auto; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>advreview</h1>
+  <span class="sub">adversarial PR review · local claude CLI · nothing posts without your OK</span>
+  <span class="acct">gh: muthukrishnanthukkaram · claude: logged in</span>
+</header>
+
+<section class="input">
+  <div>
+    <textarea>https://github.com/whatfix/mirror-service/pull/46/changes
+https://github.com/whatfix/w3o-mirror-ui/pull/89/changes
+https://github.com/whatfix/whatfix-ui-playwright/pull/89/changes
+https://github.com/whatfix/whatfix-restapi-tests/pull/107/changes
+https://github.com/whatfix/mirror-virtual/pull/3/changes
+https://github.com/whatfix/mirror-end-user/pull/581/changes
+https://github.com/whatfix/whatfix-api-automation-library/pull/13/changes
+
+Screen management
+https://github.com/whatfix/mirror-service/pull/47/changes
+https://github.com/whatfix/w3o-mirror-ui/pull/90/changes
+https://github.com/whatfix/whatfix-api-automation-library/pull/14
+https://github.com/whatfix/whatfix-restapi-tests/pull/108
+https://github.com/whatfix/whatfix-ui-playwright/pull/90
+https://github.com/whatfix/mirror-virtual/pull/4</textarea>
+    <div class="hint">Paste PR links. All of them are reviewed together as one dependent set. Parsed: <b>13 PRs, one group</b> (4 repos will be cloned, 9 found under ~/workspace/git).</div>
+  </div>
+  <div class="opts">
+    <label class="hint" style="display:flex;flex-direction:column;gap:4px">Codebase root (all platform repos)
+      <input type="text" value="~/workspace/git" style="font:12px var(--mono);padding:6px;border:1px solid var(--border);border-radius:6px;width:100%">
+      <span>69 repos found</span>
+    </label>
+    <button class="btn">Review 13 PRs</button>
+    <span class="hint">Read-only review: the reviewer only reads code and git history, never runs it.</span>
+    <span class="hint">Include the spec PR (OpenSpec change) in the group so requirements get validated.</span>
+    <span class="hint">About 25 min per group.</span>
+  </div>
+</section>
+
+<nav class="groups">
+  <div class="tab active">Group 1 (unlabeled) <span class="st done">done · 4 findings</span></div>
+  <div class="tab">Screen management <span class="st run"><span class="spin"></span> verifying 3/7</span></div>
+  <div class="tab" style="margin-left:auto;color:var(--muted)">History ▾</div>
+</nav>
+
+<main>
+  <!-- LEFT: trace -->
+  <div class="panel">
+    <h2>Trace <span class="cost" style="margin-left:auto">hunt $12.37 · verify $14.54 · 23m 40s</span></h2>
+    <div class="body">
+      <div class="phase"><span>Checkout</span><span>1m 12s</span></div>
+      <div class="ev ok"><span class="t">17:53:30</span><span class="i">✓</span><span class="m">mirror-service#46 · local clone · 27 files</span></div>
+      <div class="ev ok"><span class="t">17:53:41</span><span class="i">✓</span><span class="m">w3o-mirror-ui#89 · local clone · 36 files</span></div>
+      <div class="ev ok"><span class="t">17:53:55</span><span class="i">✓</span><span class="m">whatfix-ui-playwright#89 · cloned · 5 files</span></div>
+      <div class="ev ok"><span class="t">17:54:10</span><span class="i">✓</span><span class="m">whatfix-restapi-tests#107 · cloned · 8 files</span></div>
+      <div class="ev ok"><span class="t">17:54:20</span><span class="i">✓</span><span class="m">mirror-virtual#3 · local clone · 23 files</span></div>
+      <div class="ev ok"><span class="t">17:54:28</span><span class="i">✓</span><span class="m">mirror-end-user#581 · local clone · 10 files</span></div>
+      <div class="ev ok"><span class="t">17:54:42</span><span class="i">✓</span><span class="m">whatfix-api-automation-library#13 · cloned · 4 files</span></div>
+
+      <div class="phase"><span>Hunt pass</span><span>63 turns · 14m 05s</span></div>
+      <div class="ev tool"><span class="t">17:54:50</span><span class="i">▸</span><span class="m">Read context.md</span></div>
+      <div class="ev tool"><span class="t">17:54:58</span><span class="i">▸</span><span class="m">Read whatfix__mirror-service__pr46.diff</span></div>
+      <div class="ev tool"><span class="t">17:55:20</span><span class="i">▸</span><span class="m">Read whatfix__w3o-mirror-ui__pr89.diff</span></div>
+      <div class="ev think"><span class="t">17:56:02</span><span class="i">💭</span><span class="m">Client sends append:true on every finalize. Checking whether the server's append branch still runs insights creation.</span></div>
+      <div class="ev tool"><span class="t">17:56:05</span><span class="i">▸</span><span class="m">Grep "createInsightsAsync" in mirror-service/server/src</span></div>
+      <div class="ev tool"><span class="t">17:56:11</span><span class="i">▸</span><span class="m">Read mirror-service/.../RecordingService.java:430-600</span></div>
+      <div class="ev tool"><span class="t">17:56:40</span><span class="i">▸</span><span class="m">Read mirror-virtual/openspec/changes/FIX-134871-rrweb-chunkification/specs/rrweb-chunkification/spec.md</span></div>
+      <div class="ev think"><span class="t">17:57:30</span><span class="i">💭</span><span class="m">Spec found in mirror-virtual#3. 13 requirements. Mapping each to code.</span></div>
+      <div class="ev tool"><span class="t">17:58:01</span><span class="i">▸</span><span class="m">Grep "recordingTimestamp" in mirror-end-user/src/ts/rrweb</span></div>
+      <div class="ev tool"><span class="t">17:58:14</span><span class="i">▸</span><span class="m">git -C w3o-mirror-ui log -p --follow src/capture/rrweb/page/recording/screenGraph.ts</span></div>
+      <div class="ev tool"><span class="t">17:59:03</span><span class="i">▸</span><span class="m">Agent: trace every caller of finalizeRecordings across all 7 checkouts</span></div>
+      <div class="ev tool"><span class="t">18:03:40</span><span class="i">▸</span><span class="m">Read mirror-service/.../AuditLogAspect.java</span></div>
+      <div class="ev"><span class="t">…</span><span class="i"></span><span class="m" style="color:var(--muted)">41 more tool calls</span></div>
+      <div class="ev ok"><span class="t">18:08:55</span><span class="i">✓</span><span class="m">Hunt done · 5 candidate findings · spec 13 reqs</span></div>
+
+      <div class="phase"><span>Verify pass</span><span>4 parallel · 8m 23s</span></div>
+      <div class="ev ok"><span class="t">18:10:28</span><span class="i">✓</span><span class="m">F3 CONFIRMED 80% · 11 turns</span></div>
+      <div class="ev ok"><span class="t">18:12:40</span><span class="i">✓</span><span class="m">F2 CONFIRMED 88% · 21 turns</span></div>
+      <div class="ev warn"><span class="t">18:13:52</span><span class="i">✗</span><span class="m">F4 REFUTED · every start mints a fresh UUID; append-to-existing is FIX-133789 scope</span></div>
+      <div class="ev ok"><span class="t">18:14:30</span><span class="i">✓</span><span class="m">F1 CONFIRMED 75% · severity lowered HIGH → MEDIUM</span></div>
+      <div class="ev ok"><span class="t">18:17:18</span><span class="i">✓</span><span class="m">F5 CONFIRMED 70% · 27 turns</span></div>
+
+      <div class="phase"><span>Done</span><span></span></div>
+      <div class="ev ok"><span class="t">18:17:20</span><span class="i">✓</span><span class="m">Saved reviews/20261015-175330/report.md · worktrees removed</span></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: report -->
+  <div class="panel">
+    <h2>Report
+      <div class="actions">
+        <button class="btn secondary" style="padding:5px 10px;font-size:12px">Open report.md</button>
+        <button class="btn" style="padding:5px 10px;font-size:12px" disabled title="select findings first">Post 0 selected…</button>
+      </div>
+    </h2>
+    <div class="body">
+      <div class="prs">
+        <a href="#">mirror-service#46</a> FIX-134871: rrweb recording chunkification (backend) ·
+        <a href="#">w3o-mirror-ui#89</a> rrweb capture chunkification ·
+        <a href="#">whatfix-ui-playwright#89</a> · <a href="#">whatfix-restapi-tests#107</a> ·
+        <a href="#">mirror-virtual#3</a> OpenSpec change · <a href="#">mirror-end-user#581</a> chunked replay ·
+        <a href="#">whatfix-api-automation-library#13</a>
+      </div>
+
+      <div class="section">
+        <h3>Summary</h3>
+        <div class="summary">Seven-PR rrweb chunkification group. Cross-repo contracts (chunkIndex query param, /chunk/{n} serve route, finalize append/isNewFolder, schema chunk_index) are consistent across all repos. Two high-impact defects: the end-user legacy fallback seeks with an absolute baseline against relative timestamps, and the server's append path never creates insights or the FOLDER_CREATE event. Deploy order matters: mirror-service before w3o-mirror-ui. PR bodies mention manifest/append-batch endpoints that do not exist in code.</div>
+      </div>
+
+      <div class="section">
+        <h3>Spec compliance <span class="hint">· mirror-virtual#3 openspec/…/rrweb-chunkification/spec.md · 9 met, 3 partial, 1 contradicted</span></h3>
+        <table class="spec">
+          <tr><td><span class="pill met">MET</span></td><td>R1</td><td>Recording data uploads progressively during capture, gated by size or screen count</td></tr>
+          <tr><td><span class="pill partial">PARTIAL</span></td><td>R2</td><td>Short session stored and served identically to an unchunked recording<br><span class="hint">Pre-existing unchunked recordings no longer replay (F1)</span></td></tr>
+          <tr><td><span class="pill met">MET</span></td><td>R3</td><td>Page reload sends what was captured</td></tr>
+          <tr><td><span class="pill met">MET</span></td><td>R4</td><td>Chunked recording serves per chunk, no manifest</td></tr>
+          <tr><td><span class="pill partial">PARTIAL</span></td><td>R5</td><td>Orphaned-recording cleanup removes every chunk<br><span class="hint">Correct only if IObjectStore.list returns prefix-relative names; client lib not in checkout</span></td></tr>
+          <tr><td><span class="pill contra">CONTRA</span></td><td>R8</td><td>Batches work for new AND existing workflow; result identical to one large call<br><span class="hint">Append path never creates insights or FOLDER_CREATE (F2)</span></td></tr>
+          <tr><td colspan="3" class="hint">+ 7 more met · <a href="#">show all</a></td></tr>
+        </table>
+      </div>
+
+      <div class="section">
+        <h3>Findings <span class="hint">· 4 reported, 1 refuted</span></h3>
+
+        <details class="finding" open>
+          <summary>
+            <input type="checkbox"> <span class="sev high">HIGH</span> <span class="verdict">CONFIRMED 88%</span>
+            <b>F2 Append path skips insights creation and FOLDER_CREATE analytics for every rrweb workflow</b>
+            <span class="flag">CROSS-PR</span><span class="flag">SPEC-GAP</span>
+            <span class="loc">mirror-service#46 · server/src/main/java/com/whatfix/service/RecordingService.java:449 · behavior-regression</span>
+          </summary>
+          <div class="det">
+            <p>finalizeRecordings delegates to appendScreensBatch whenever append==true and returns immediately. appendScreensBatch never calls createInsightsAsync nor sendObjectEvent(FOLDER_CREATE). The updated client sends append:true on every finalize call, so no rrweb workflow gets a funnel or a create event.</p>
+            <p><b>Fails when</b> An author captures a workflow with the updated client. First batch hits finalize with append:true, isNewFolder:true; appendScreensBatch creates folder and screens, returns 200, then finalizeRecordings returns before createInsightsAsync. Folder persisted with no insight_ids, no funnel, no FOLDER_CREATE event.</p>
+            <p><b>Evidence</b> <code>RecordingService.java:448-451</code> <code>if (Boolean.TRUE.equals(…getAppend())) { return appendScreensBatch(...); }</code> runs before createInsightsAsync (line 578). Client: <code>uploadService.ts:126</code> <code>append: true</code>.</p>
+            <p><b>Fix</b> In appendScreensBatch, after a successful isNewFolder create, fire createInsightsAsync and the FOLDER_CREATE event; update insights on later batches.</p>
+            <p><b>Verifier</b> Traced from MirrorFolderList "Start Mirroring" through uploadService to the server; no other code path creates insights for rrweb folders.</p>
+          </div>
+        </details>
+
+        <details class="finding">
+          <summary>
+            <input type="checkbox"> <span class="sev medium">MEDIUM</span> <span class="verdict">CONFIRMED 75%</span>
+            <b>F1 Legacy whole-blob fallback seeks with absolute baseline against relative timestamps</b>
+            <span class="flag">CROSS-PR</span><span class="flag">SPEC-GAP</span>
+            <span class="loc">mirror-end-user#581 · src/ts/rrweb/index.ts:525 · backward-compat</span>
+          </summary>
+          <div class="det"><p>showScreen now always calls replayer.pause(recordingTimestamp - baselineTs) …</p></div>
+        </details>
+
+        <details class="finding">
+          <summary>
+            <input type="checkbox"> <span class="sev medium">MEDIUM</span> <span class="verdict">CONFIRMED 80%</span>
+            <b>F3 @AuditLog(CREATED, MIRROR_FOLDER) now fires once per append batch and on failed batches</b>
+            <span class="loc">mirror-service#46 · server/src/main/java/com/whatfix/service/RecordingService.java:434 · audit-correctness</span>
+          </summary>
+          <div class="det"><p>…</p></div>
+        </details>
+
+        <details class="finding">
+          <summary>
+            <input type="checkbox"> <span class="sev medium">MEDIUM</span> <span class="verdict">CONFIRMED 70%</span>
+            <b>F5 New client against an old mirror-service silently corrupts recordings and drops batches</b>
+            <span class="flag">CROSS-PR</span>
+            <span class="loc">w3o-mirror-ui#89 · src/capture/rrweb/background/recording/uploadService.ts:96 · deploy-order</span>
+          </summary>
+          <div class="det"><p>…</p></div>
+        </details>
+
+        <details class="finding">
+          <summary>
+            <span class="sev medium" style="background:#8c959f">REFUTED</span>
+            <span class="refuted">F4 First batch of any group is always isNewFolder=true, so appending to an existing folder cannot succeed</span>
+          </summary>
+          <div class="det refuted"><p>Every "Start Mirroring" mints a fresh UUID and defers folder creation to the first batch. Append-to-existing is FIX-133789's Add flow, out of scope here. Not a regression: the pre-PR path always called createRecordingWorkflow too.</p></div>
+        </details>
+      </div>
+
+      <div class="section hint">
+        Posting: tick findings, click <b>Post selected</b>. Each one is shown again with an editable comment and a per-finding confirm before it goes to GitHub as an inline review comment on the reviewed commit.
+      </div>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>
