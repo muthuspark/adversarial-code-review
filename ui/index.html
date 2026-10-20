@@ -4,118 +4,195 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>advreview</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+  /* Tokens from DESIGN.md ("Skyfall AI"): white canvas, one near-black ink,
+     one electric blue accent, flat chrome with hairline borders. Geist for
+     text, Geist Mono for labels and metadata. Severity needs a warning tone
+     the blue palette cannot carry, so one amber joins the error red; blue
+     stands in for "success" so the accent set stays disciplined. */
   :root {
-    --bg: #f6f6f6; --panel: #fff; --border: #e5e5e5; --text: #141414; --muted: #4f4f52;
-    --accent: #141414; --crit: #a40e26; --high: #cf222e; --med: #9a6700; --ok: #1a7f37;
-    --font-gt-america: 'GT America', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --font-ui-monospace-monospace: 'ui-monospace / monospace', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    --font-monospace: 'monospace', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    --mono: var(--font-monospace);
+    color-scheme: light;
+    --ink: #1A1A1A;
+    --blue: #3E57DA;
+    --blue-60: #6B7BE6; --blue-70: #8C97EC; --blue-80: #B0B8F2; --blue-90: #D7DCF8;
+    --line: #E5E7EB;
+    --paper: #FFFFFF;
+    --muted: #6B7280;
+    --error: #D92D20; --error-text: #B42318; --error-wash: #FEE4E2;
+    --amber-text: #B54708; --amber-wash: #FEF0C7;
+    --gray-wash: #F3F4F6;
+    --ring: rgba(62, 87, 218, .22);
+
+    --sans: "Geist", Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    --r-none: 0; --r-sm: 4px; --r-md: 8px; --r-full: 9999px;
+    --s-xs: 8px; --s-sm: 20px; --s-md: 40px;
+    --ease-out: cubic-bezier(.22, 1, .36, 1);
+    --t-fast: 150ms; --t-med: 220ms;
+    --z-content: 1; --z-modal: 10;
   }
   * { box-sizing: border-box; }
   html, body { width: 100%; height: 100%; overflow: hidden; }
-  body { margin: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr); font: 14px/1.38 var(--font-gt-america); color: var(--text); background: var(--bg); }
-  header { min-height: 44px; background: var(--panel); border-bottom: 1px solid var(--border); padding: 6px 14px; display: flex; align-items: center; gap: 16px; }
-  header h1 { font-size: 15px; margin: 0; }
-  header .sub { color: var(--muted); font-size: 12px; }
-  header .right { margin-left: auto; display: flex; gap: 10px; align-items: center; font-size: 12px; }
-  select { font: inherit; font-size: 12px; padding: 3px 6px; border: 1px solid var(--border); border-radius: 4px; max-width: 360px; }
+  body {
+    margin: 0;
+    display: grid; grid-template-rows: auto auto minmax(0, 1fr);
+    font: 400 14px/20px var(--sans); letter-spacing: -0.14px; color: var(--ink); background: var(--paper);
+  }
+  .label { font-family: var(--mono); font-size: 12px; line-height: 16px; letter-spacing: .04em; }
 
-  .input { min-height: 0; }
-  .input h2 { font-size: 13px; margin: 0; padding: 10px 14px; border-bottom: 1px solid var(--border); }
-  .input .entry { display: flex; flex-direction: column; gap: 8px; padding: 12px; min-height: 0; flex: 1; }
-  .input .entry > div { display: flex; flex-direction: column; gap: 8px; min-height: 0; flex: 1; }
-  textarea { width: 100%; height: 140px; font: 12.5px/1.5 var(--mono); padding: 10px; border: 1px solid var(--border); border-radius: 6px; resize: vertical; }
-  .input textarea { flex: 1; min-height: 0; resize: none; border-radius: 4px; }
-  .input #codebase { padding: 5px 7px !important; border-color: var(--border) !important; border-radius: 4px !important; }
-  .helper { margin: 0; border-top: 1px solid var(--border); padding-top: 6px; }
-  .helper summary { cursor: pointer; font-size: 12px; color: var(--muted); }
-  .helper p { margin: 5px 0 0; }
-  .opts { display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; border-top: 1px solid var(--border); }
-  .btn { background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 7px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
-  .btn.secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
-  .btn.small { padding: 5px 10px; font-size: 12px; }
-  .btn:hover:not(:disabled) { filter: brightness(1.15); }
-  .btn:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid #69bee2; outline-offset: 2px; }
-  .btn:disabled { opacity: .5; cursor: default; }
-  .hint { font-size: 12px; color: var(--muted); }
-  .err { color: var(--high); font-size: 12.5px; }
+  header { position: relative; overflow: hidden; min-height: 60px; padding: 0 var(--s-sm); display: flex; align-items: center; gap: var(--s-sm); border-bottom: 1px solid var(--line); background: var(--paper); }
+  header > * { position: relative; z-index: var(--z-content); }
+  header h1 { font: 500 22px/1 var(--sans); letter-spacing: -0.6px; margin: 0; }
+  header .sub { font-family: var(--mono); font-size: 12px; line-height: 16px; letter-spacing: .04em; color: var(--muted); }
+  header .right { margin-left: auto; background: var(--paper); padding: 10px 0 10px 16px; display: flex; gap: 10px; align-items: center; font-family: var(--mono); font-size: 12px; letter-spacing: .04em; color: var(--muted); }
+  /* Brand mosaic: small blue squares in the primary scale, behind the right
+     side of the header. Still by default, it shimmers only while a run is live. */
+  #field { position: absolute; z-index: 0; inset: 0 0 0 auto; width: 46%; height: 100%; pointer-events: none; -webkit-mask-image: linear-gradient(90deg, transparent, #000 35%); mask-image: linear-gradient(90deg, transparent, #000 35%); }
 
-  .groups { min-width: 0; padding: 0 14px; background: var(--panel); border-bottom: 1px solid var(--border); display: flex; gap: 4px; min-height: 38px; }
-  .tab { padding: 8px 10px; border-bottom: 2px solid transparent; cursor: pointer; font-size: 13px; }
-  .tab.active { border-color: var(--accent); font-weight: 600; }
-  .tab .st { font-size: 11px; color: var(--muted); margin-left: 6px; font-weight: 400; }
-  .tab .st.running { color: var(--accent); }
-  .tab .st.done { color: var(--ok); }
-  .tab .st.error { color: var(--high); }
+  select, input[type=text], textarea {
+    font: 400 14px/20px var(--sans); letter-spacing: -0.14px; color: var(--ink); background: var(--paper);
+    border: 1px solid var(--line); border-radius: var(--r-sm);
+    transition: border-color var(--t-fast) var(--ease-out), box-shadow var(--t-fast) var(--ease-out);
+  }
+  select { font-family: var(--mono); font-size: 12px; letter-spacing: .02em; padding: 6px 8px; max-width: 380px; color: var(--ink); }
+  select:hover, input[type=text]:hover, textarea:hover { border-color: #C9CDD4; }
+  select:focus-visible, input[type=text]:focus-visible, textarea:focus-visible { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--ring); }
+  textarea { width: 100%; height: 140px; padding: 12px 14px; resize: vertical; }
+  textarea::placeholder, input::placeholder { color: var(--muted); }
+  .btn:focus-visible, summary:focus-visible, .tab:focus-visible, input[type=checkbox]:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 
-  main { min-height: 0; overflow: hidden; display: grid; grid-template-columns: minmax(260px, 0.82fr) minmax(0, 1.45fr) minmax(0, 1fr); gap: 10px; padding: 10px 14px 12px; }
-  @media (max-width: 980px) { main { grid-template-columns: 240px 420px 320px; overflow-x: auto; } }
-  @media (max-height: 680px) { .input .opts { gap: 5px; padding: 7px 10px; } .input .entry { padding: 9px; } .panel h2, .input h2 { padding-top: 7px; padding-bottom: 7px; } }
+  .btn {
+    font: 400 13px/20px var(--mono); letter-spacing: .02em;
+    background: var(--ink); color: var(--paper); border: 1px solid var(--ink); border-radius: var(--r-sm);
+    height: 44px; padding: 8px 16px; cursor: pointer;
+    transition: background var(--t-fast) var(--ease-out), border-color var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out);
+  }
+  .btn:hover:not(:disabled) { background: var(--blue); border-color: var(--blue); }
+  .btn.secondary { background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn.secondary:hover:not(:disabled) { background: var(--paper); border-color: var(--ink); }
+  .btn.small { height: 32px; padding: 0 12px; font-size: 12px; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .hint { font-size: 12px; line-height: 16px; letter-spacing: 0; color: var(--muted); }
+  .err { color: var(--error-text); font-size: 12px; line-height: 16px; }
+
+  .groups { min-width: 0; padding: 0 var(--s-sm); display: flex; gap: 2px; min-height: 40px; border-bottom: 1px solid var(--line); }
+  .groups:empty { min-height: 0; border-bottom: 0; }
+  .tab { padding: 12px 12px 10px; margin-bottom: -1px; border-bottom: 2px solid transparent; cursor: pointer; font-family: var(--mono); font-size: 12px; line-height: 16px; letter-spacing: .04em; color: var(--muted); transition: color var(--t-fast) var(--ease-out), border-color var(--t-fast) var(--ease-out); }
+  .tab:hover { color: var(--ink); }
+  .tab.active { color: var(--ink); border-color: var(--ink); }
+  .tab .st { color: var(--muted); margin-left: 10px; }
+  .tab .st.running { color: var(--ink); }
+  .tab .st.done { color: var(--blue); }
+  .tab .st.error { color: var(--error-text); }
+
+  main { min-height: 0; overflow: hidden; display: grid; grid-template-columns: minmax(280px, .82fr) minmax(0, 1.45fr) minmax(0, 1fr); gap: var(--s-sm); padding: var(--s-sm); }
+  @media (max-width: 980px) { main { grid-template-columns: 260px 440px 340px; overflow-x: auto; } }
+  @media (max-height: 680px) { .input .opts { gap: 8px; padding: 10px 12px; } .input .entry { padding: 10px; } .panel h2 { padding-top: 10px; padding-bottom: 10px; } }
   @media (max-width: 700px) { header .sub { display: none; } .groups { overflow-x: auto; } }
-  .panel { min-width: 0; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; display: flex; flex-direction: column; min-height: 0; }
-  .panel h2 { font-size: 13px; margin: 0; padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
-  .panel .body { min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 10px 12px; flex: 1; }
-  .empty { color: var(--muted); font-size: 13px; padding: 20px; text-align: center; }
 
-  .phase { margin: 10px 0 4px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; display: flex; justify-content: space-between; }
-  .ev { display: grid; grid-template-columns: 54px 18px 1fr; gap: 6px; font: 12px/1.5 var(--mono); padding: 2px 0; }
+  .panel { min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-md); }
+  .panel h2 { font: 500 17px/24px var(--sans); letter-spacing: -0.3px; margin: 0; padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
+  .panel .body { min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 16px; flex: 1; }
+  .empty { color: var(--muted); font-size: 13px; padding: var(--s-md) var(--s-sm); text-align: center; text-wrap: balance; }
+
+  .input .entry { display: flex; flex-direction: column; gap: var(--s-xs); padding: 16px; min-height: 0; flex: 1; }
+  .input .entry > div { display: flex; flex-direction: column; gap: var(--s-xs); min-height: 0; flex: 1; }
+  .input textarea { flex: 1; min-height: 0; resize: none; }
+  .opts { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-top: 1px solid var(--line); }
+  .field { display: flex; flex-direction: column; gap: 6px; font-family: var(--mono); letter-spacing: .04em; }
+  .field input { width: 100%; padding: 8px 10px; font-family: var(--mono); font-size: 12px; letter-spacing: 0; }
+  .field #codebaseInfo { font-family: var(--sans); letter-spacing: 0; }
+  .helper { margin: 0; border-top: 1px solid var(--line); padding-top: 10px; }
+  .helper summary { cursor: pointer; font-family: var(--mono); font-size: 12px; line-height: 16px; letter-spacing: .04em; color: var(--muted); list-style: none; display: flex; align-items: center; gap: 8px; }
+  .helper summary:hover { color: var(--ink); }
+  .helper summary::-webkit-details-marker { display: none; }
+  .helper summary::before { content: "+"; width: 10px; }
+  .helper[open] summary::before { content: "\2212"; }
+  .helper p { margin: 8px 0 0; }
+
+  .phase { margin: 16px 0 6px; padding-bottom: 6px; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 12px; line-height: 16px; letter-spacing: .04em; color: var(--ink); display: flex; justify-content: space-between; }
+  .phase:first-child { margin-top: 0; }
+  .ev { display: grid; grid-template-columns: 60px 14px 1fr; gap: 8px; font-family: var(--mono); font-size: 12px; line-height: 18px; letter-spacing: 0; padding: 2px 0; animation: rise var(--t-med) var(--ease-out) both; }
   .ev .t { color: var(--muted); }
-  .ev .i { text-align: center; }
+  .ev .i { text-align: center; color: var(--muted); }
   .ev .m { white-space: pre-wrap; word-break: break-word; }
-  .ev.tool .m { color: #57606a; }
-  .ev.text .m { color: #6e40c9; font-family: inherit; font-style: italic; }
-  .ev.ok .m, .ev.done .m { color: var(--ok); }
-  .ev.warn .m { color: var(--med); }
-  .ev.error .m { color: var(--high); }
-  .ev.verdict.REFUTED .m { color: var(--med); }
-  .ev.verdict.CONFIRMED .m { color: var(--ok); }
+  .ev.tool .m { color: var(--muted); }
+  .ev.text .m { color: var(--blue); font-family: var(--sans); font-size: 13px; letter-spacing: -0.1px; }
+  .ev.ok .m, .ev.done .m, .ev.ok .i, .ev.done .i { color: var(--blue); }
+  .ev.warn .m, .ev.warn .i { color: var(--amber-text); }
+  .ev.error .m, .ev.error .i { color: var(--error-text); }
+  .ev.verdict.REFUTED .m, .ev.verdict.REFUTED .i { color: var(--amber-text); }
+  .ev.verdict.CONFIRMED .m, .ev.verdict.CONFIRMED .i { color: var(--blue); }
   .ev.verdict.UNCERTAIN .m { color: var(--muted); }
-  .spin { display: inline-block; width: 10px; height: 10px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: s 1s linear infinite; vertical-align: middle; margin-right: 4px; }
+  .spin { display: inline-block; width: 10px; height: 10px; border: 2px solid var(--blue-90); border-top-color: var(--blue); border-radius: 50%; animation: s 1s linear infinite; vertical-align: -1px; margin-right: 6px; }
   @keyframes s { to { transform: rotate(360deg); } }
-  .cost { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-left: auto; }
+  @keyframes rise { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+  .cost { font-family: var(--mono); font-size: 12px; line-height: 16px; letter-spacing: .02em; color: var(--muted); margin-left: auto; }
 
-  .summary { font-size: 13.5px; white-space: pre-wrap; }
-  .section { margin-top: 16px; }
-  .section h3 { font-size: 13px; margin: 0 0 8px; }
-  .prs { font-size: 12.5px; }
-  .prs a { color: var(--accent); text-decoration: none; }
-  table.spec { border-collapse: collapse; width: 100%; font-size: 12.5px; }
-  table.spec td { padding: 5px 8px; border-top: 1px solid var(--border); vertical-align: top; }
-  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 11px; font-weight: 600; font-family: var(--mono); white-space: nowrap; }
-  .met { background: #dafbe1; color: var(--ok); }
-  .partial { background: #fff8c5; color: var(--med); }
-  .missing { background: #ffebe9; color: var(--high); }
-  .contradicted { background: var(--high); color: #fff; }
-  .sev { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 11px; font-weight: 700; color: #fff; }
-  .sev.critical { background: var(--crit); } .sev.high { background: var(--high); } .sev.medium { background: var(--med); } .sev.refuted { background: #8c959f; }
-  .flag { font-size: 10.5px; font-weight: 600; color: #8250df; border: 1px solid #d8b9ff; border-radius: 4px; padding: 0 5px; }
-  .finding { border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; }
-  .finding summary { padding: 9px 12px; cursor: pointer; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; list-style: none; }
+  .summary { font-size: 14px; line-height: 22px; white-space: pre-wrap; max-width: 72ch; }
+  .section { margin-top: var(--s-md); }
+  .section:first-of-type { margin-top: 28px; }
+  .section h3 { font: 500 17px/24px var(--sans); letter-spacing: -0.3px; margin: 0 0 10px; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .section h3 .hint { font-family: var(--mono); letter-spacing: .02em; }
+  .prs { font-size: 14px; line-height: 22px; margin-top: 6px; }
+  .prs a { color: var(--ink); text-decoration: none; font-family: var(--mono); font-size: 12px; letter-spacing: .02em; border-bottom: 1px solid var(--line); transition: border-color var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out); }
+  .prs a:hover { color: var(--blue); border-color: var(--blue); }
+  table.spec { border-collapse: collapse; width: 100%; font-size: 13px; line-height: 19px; }
+  table.spec td { padding: 8px 10px; border-top: 1px solid var(--line); vertical-align: top; }
+  table.spec td:first-child { padding-left: 0; white-space: nowrap; }
+  table.spec td:nth-child(2) { font-family: var(--mono); font-size: 12px; letter-spacing: .02em; color: var(--muted); }
+  .pill, .sev, summary .verdict, .flag { display: inline-block; font-family: var(--mono); font-size: 11px; line-height: 16px; letter-spacing: .04em; padding: 2px 10px; border-radius: var(--r-full); white-space: nowrap; }
+  .pill.met { background: var(--blue-90); color: var(--ink); }
+  .pill.partial { background: var(--amber-wash); color: var(--amber-text); }
+  .pill.missing { background: var(--error-wash); color: var(--error-text); }
+  .pill.contradicted { background: var(--error); color: var(--paper); }
+  .sev.critical { background: var(--error); color: var(--paper); }
+  .sev.high { background: var(--error-wash); color: var(--error-text); }
+  .sev.medium { background: var(--amber-wash); color: var(--amber-text); }
+  .sev.refuted { background: var(--gray-wash); color: var(--muted); }
+  summary .verdict { background: var(--blue-90); color: var(--ink); }
+  summary .verdict.UNCERTAIN { background: var(--amber-wash); color: var(--amber-text); }
+  summary .verdict.unverified { background: var(--gray-wash); color: var(--muted); }
+  .flag { background: transparent; color: var(--muted); border: 1px solid var(--line); padding: 1px 9px; }
+  .finding { border: 1px solid var(--line); border-radius: var(--r-md); margin-bottom: 12px; background: var(--paper); transition: border-color var(--t-fast) var(--ease-out); animation: rise var(--t-med) var(--ease-out) both; animation-delay: calc(var(--i, 0) * 35ms); }
+  .finding:hover, .finding[open] { border-color: #C9CDD4; }
+  .finding summary { padding: 14px 16px; cursor: pointer; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; list-style: none; }
   .finding summary::-webkit-details-marker { display: none; }
-  .finding .loc { font: 11.5px var(--mono); color: var(--muted); width: 100%; }
-  .finding .det { padding: 0 12px 12px; font-size: 13px; border-top: 1px solid var(--border); }
-  .finding .det p { margin: 8px 0; white-space: pre-wrap; }
-  .finding .det b { color: var(--muted); font-weight: 600; }
-  .finding.refuted summary b { color: var(--muted); font-weight: 400; }
-  .verdict { font: 11px var(--mono); padding: 1px 6px; border-radius: 4px; background: #dafbe1; color: var(--ok); }
-  .verdict.UNCERTAIN { background: #fff8c5; color: var(--med); }
-  .verdict.unverified { background: #eaeef2; color: var(--muted); }
-  .posted { font-size: 11px; color: var(--ok); }
+  .finding summary b { font-weight: 500; font-size: 15px; line-height: 22px; letter-spacing: -0.2px; width: 100%; margin-top: 2px; }
+  .finding .loc { font-family: var(--mono); font-size: 12px; line-height: 16px; letter-spacing: .02em; color: var(--muted); width: 100%; }
+  .finding .det { padding: 0 16px 16px; font-size: 14px; line-height: 22px; border-top: 1px solid var(--line); max-width: 76ch; }
+  .finding .det p { margin: 12px 0 0; white-space: pre-wrap; }
+  .finding .det b { font-family: var(--mono); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); font-weight: 400; margin-right: 6px; }
+  .finding.refuted summary b { color: var(--muted); font-weight: 400; font-size: 14px; }
+  .posted { font-family: var(--mono); font-size: 12px; letter-spacing: .02em; color: var(--blue); }
   .actions { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+  input[type=checkbox] { accent-color: var(--ink); width: 15px; height: 15px; margin: 0; }
 
-  dialog { border: 1px solid var(--border); border-radius: 8px; padding: 0; width: 720px; max-width: 95vw; }
-  dialog .dh { padding: 10px 14px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 13px; }
-  dialog .db { padding: 14px; }
-  dialog textarea { height: 260px; }
-  dialog .df { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
-  dialog::backdrop { background: rgba(0,0,0,.3); }
+  dialog { z-index: var(--z-modal); border: 1px solid var(--line); border-radius: var(--r-md); padding: 0; width: 720px; max-width: 95vw; background: var(--paper); color: var(--ink); }
+  dialog[open] { animation: rise var(--t-med) var(--ease-out) both; }
+  dialog .dh { padding: 16px var(--s-sm); border-bottom: 1px solid var(--line); font: 500 17px/24px var(--sans); letter-spacing: -0.3px; text-wrap: balance; }
+  dialog .db { padding: var(--s-sm); }
+  dialog textarea { height: 260px; font-family: var(--mono); font-size: 12.5px; line-height: 19px; letter-spacing: 0; }
+  dialog .df { padding: 12px var(--s-sm); border-top: 1px solid var(--line); display: flex; gap: 8px; justify-content: flex-end; align-items: center; }
+  dialog .df .hint { margin-right: auto; font-family: var(--mono); letter-spacing: .04em; }
+  dialog .df .btn { height: 36px; }
+  dialog::backdrop { background: rgba(26, 26, 26, .4); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 1ms !important; animation-delay: 0ms !important; transition-duration: 1ms !important; }
+    .spin { animation: none; border-top-color: var(--blue); }
+  }
 </style>
 </head>
 <body>
 
 <header>
+  <canvas id="field" aria-hidden="true"></canvas>
   <h1>advreview</h1>
   <span class="sub">adversarial PR review · local claude CLI · read-only · nothing posts without your OK</span>
   <div class="right">
@@ -135,8 +212,8 @@
   </div>
   </div>
   <div class="opts">
-    <label class="hint" style="display:flex;flex-direction:column;gap:4px">Codebase root (all platform repos)
-      <input type="text" id="codebase" style="font:12px var(--mono);padding:6px;border:1px solid var(--border);border-radius:6px;width:100%">
+    <label class="hint field">Codebase root (all platform repos)
+      <input type="text" id="codebase">
       <span id="codebaseInfo"></span>
     </label>
     <button class="btn" id="go" disabled>Review</button>
@@ -188,6 +265,44 @@ let traces = {};           // group index -> [events]
 let sessions = {};         // group index -> loaded session data
 let es = null;
 
+// ---------- brand mosaic
+// Small blue squares in the primary scale behind the right side of the header.
+// A single still frame until a run is live, then the squares shimmer slowly so
+// the page itself signals "working". Reduced-motion users keep the still frame.
+const field = (() => {
+  const canvas = $("#field"), ctx = canvas.getContext("2d");
+  const BLUES = ["#3E57DA", "#6B7BE6", "#8C97EC", "#B0B8F2", "#D7DCF8"];
+  const CELL = 10, GAP = 3;
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+  let w = 0, h = 0, dpr = 1, cols = 0, rows = 0, seeds = [], timer = 0, live = false, t0 = performance.now();
+  function size() {
+    const r = canvas.getBoundingClientRect(); dpr = devicePixelRatio || 1;
+    w = r.width; h = r.height; canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+    cols = Math.ceil(w / (CELL + GAP)); rows = Math.ceil(h / (CELL + GAP));
+    seeds = Array.from({ length: cols * rows }, (_, i) => ({ x: i % cols, y: Math.floor(i / cols), r: Math.random(), p: Math.random() * 6.28 }));
+  }
+  function draw(now) {
+    const t = live && !reduced.matches ? (now - t0) / 1000 : 0;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+    for (const s of seeds) {
+      const fade = s.x / cols;                                   // sparse on the left, dense on the right
+      if (s.r > fade * 0.85 + 0.05) continue;
+      const shade = BLUES[Math.min(4, Math.floor(s.r / Math.max(fade, 0.01) * 5))];
+      const pulse = live ? 0.12 * Math.sin(t * 0.9 + s.p) : 0;
+      ctx.globalAlpha = Math.max(0.18, Math.min(0.85, 0.3 + fade * 0.5 + pulse));
+      ctx.fillStyle = shade;
+      ctx.fillRect(s.x * (CELL + GAP), s.y * (CELL + GAP), CELL, CELL);
+    }
+    ctx.globalAlpha = 1;
+  }
+  function tick() { draw(performance.now()); timer = live && !reduced.matches ? setTimeout(() => requestAnimationFrame(tick), 120) : 0; }
+  function setLive(v) { live = v; if (!timer) requestAnimationFrame(tick); }
+  addEventListener("resize", () => { size(); if (!timer) requestAnimationFrame(tick); });
+  reduced.addEventListener("change", () => { if (!timer) requestAnimationFrame(tick); });
+  size(); requestAnimationFrame(tick);
+  return { setLive };
+})();
+
 // ---------- input parsing preview
 let parseTimer;
 $("#text").addEventListener("input", () => {
@@ -236,6 +351,7 @@ $("#go").addEventListener("click", async () => {
   run = data; traces = {}; sessions = {}; active = 0;
   run.groups.forEach(g => traces[g.index] = []);
   renderTabs(); renderTrace(); renderReport();
+  field.setLive(true);
   subscribe();
 });
 
@@ -244,7 +360,7 @@ function subscribe() {
   es = new EventSource(`/api/events?id=${run.id}`);
   es.onmessage = e => {
     const ev = JSON.parse(e.data);
-    if (ev.kind === "run_done") { es.close(); $("#go").disabled = false; return; }
+    if (ev.kind === "run_done") { es.close(); $("#go").disabled = false; field.setLive(false); return; }
     const g = run.groups[ev.group];
     if (ev.kind === "status") {
       g.status = ev.status; if (ev.session) g.session = ev.session; if (ev.findings != null) g.findings = ev.findings;
@@ -277,15 +393,19 @@ function renderTabs() {
     if (st === "running") st = `<span class="spin"></span>${g.progress || "checking out"}`;
     else if (st === "done") st = `done · ${g.findings} finding${g.findings === 1 ? "" : "s"}`;
     else if (st === "error") st = "failed";
-    return `<div class="tab ${g.index === active ? "active" : ""}" data-i="${g.index}">
+    return `<div class="tab ${g.index === active ? "active" : ""}" data-i="${g.index}" tabindex="0" role="tab" aria-selected="${g.index === active}">
       ${esc(g.label || `Group ${g.index + 1}`)} <span class="st ${g.status}">${st}</span></div>`;
   }).join("");
-  document.querySelectorAll(".tab").forEach(t => t.onclick = () => { active = +t.dataset.i; renderTabs(); renderTrace(); renderReport(); });
+  document.querySelectorAll(".tab").forEach(t => {
+    const pick = () => { active = +t.dataset.i; renderTabs(); renderTrace(); renderReport(); };
+    t.onclick = pick;
+    t.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } };
+  });
 }
 
 // ---------- trace
 const PHASES = { checkout: "Checkout", hunt: "Hunt pass", verify: "Verify pass", done: "Done" };
-const ICON = { info: "·", ok: "✓", warn: "!", error: "✗", tool: "▸", text: "💭", verdict: "✓", done: "✓" };
+const ICON = { info: "·", ok: "✓", warn: "!", error: "✗", tool: "▸", text: "~", verdict: "✓", done: "✓" };
 function renderTrace() {
   const box = $("#trace"); box.innerHTML = ""; lastPhase = null;
   const evs = traces[active] || [];
@@ -332,29 +452,29 @@ function renderReport() {
   spec.requirements.forEach(q => counts[q.status] = (counts[q.status] || 0) + 1);
   box.innerHTML = `
     <div class="hint">codebase root: ${esc(r.codebase || "")}</div>
-    <div class="prs">${r.prs.map(p => `<a href="${esc(p.url)}" target="_blank">${esc(p.repo)}#${p.number}</a> ${esc(p.title)}`).join(" · ")}</div>
+    <div class="prs">${r.prs.map(p => `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.repo)}#${p.number}</a> ${esc(p.title)}`).join(" · ")}</div>
     <div class="section"><h3>Summary</h3><div class="summary">${esc(r.summary)}</div></div>
     ${r.cross_pr_notes && r.cross_pr_notes.trim() ? `<div class="section"><h3>Cross-PR contract check</h3><div class="summary">${esc(r.cross_pr_notes)}</div></div>` : ""}
-    <div class="section"><h3>Spec compliance <span class="hint">· ${spec.found ? esc(spec.source) + " · " + Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(", ") : "no spec found in PR bodies or diffs"}</span></h3>
+    <div class="section"><h3>Spec compliance <span class="hint">${spec.found ? esc(spec.source) + " · " + Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(", ") : "no spec found in PR bodies or diffs"}</span></h3>
       ${spec.found ? `<table class="spec">${spec.requirements.map(q => `<tr><td><span class="pill ${q.status}">${q.status.toUpperCase()}</span></td><td>${esc(q.id)}</td><td>${esc(q.text)}${q.status !== "met" && q.evidence ? `<br><span class="hint">${esc(q.evidence)}</span>` : ""}</td></tr>`).join("")}</table>` : ""}
     </div>
-    <div class="section"><h3>Findings <span class="hint">· ${live.length} reported, ${dead.length} refuted</span></h3>
-      ${live.length ? live.map((f, i) => findingCard(f, i === 0)).join("") : '<div class="hint">PASS: no finding survived verification.</div>'}
-      ${dead.map(f => `<details class="finding refuted"><summary><span class="sev refuted">REFUTED</span><b>${esc(f.id)} ${esc(f.title)}</b></summary><div class="det"><p>${esc(f.verification.reasoning)}</p></div></details>`).join("")}
+    <div class="section"><h3>Findings <span class="hint">${live.length} reported, ${dead.length} refuted</span></h3>
+      ${live.length ? live.map((f, i) => findingCard(f, i === 0, i)).join("") : '<div class="hint">PASS: no finding survived verification.</div>'}
+      ${dead.map((f, i) => `<details class="finding refuted" style="--i:${live.length + i}"><summary><span class="sev refuted">REFUTED</span><b>${esc(f.id)} ${esc(f.title)}</b></summary><div class="det"><p>${esc(f.verification.reasoning)}</p></div></details>`).join("")}
     </div>
     <div class="section hint">Posting: tick findings, click <b>Post selected</b>. Each one is shown again with an editable comment and its own confirm before it goes to GitHub as an inline review comment on the reviewed commit.</div>`;
   box.querySelectorAll("input.sel").forEach(cb => cb.onchange = updateSel);
 }
 function verdict(f) { return f.verification ? f.verification.verdict : "unverified"; }
-function findingCard(f, open) {
+function findingCard(f, open, i) {
   const v = f.verification;
   const tag = v ? `<span class="verdict ${v.verdict}">${v.verdict} ${v.confidence}%</span>` : `<span class="verdict unverified">unverified ${f.confidence}%</span>`;
-  return `<details class="finding" ${open ? "open" : ""}>
-    <summary><input type="checkbox" class="sel" data-id="${esc(f.id)}" ${f.posted_url ? "disabled" : ""}>
+  return `<details class="finding" style="--i:${Math.min(i, 12)}" ${open ? "open" : ""}>
+    <summary><input type="checkbox" class="sel" data-id="${esc(f.id)}" ${f.posted_url ? "disabled" : ""} aria-label="select ${esc(f.id)}">
       <span class="sev ${f.severity}">${f.severity.toUpperCase()}</span> ${tag}
       <b>${esc(f.id)} ${esc(f.title)}</b>
       ${f.cross_pr ? '<span class="flag">CROSS-PR</span>' : ""}${f.spec_gap ? '<span class="flag">SPEC-GAP</span>' : ""}${(f.affected_repos || []).map(r => `<span class="flag">AFFECTS ${esc(r)}</span>`).join("")}
-      ${f.posted_url ? `<a class="posted" href="${esc(f.posted_url)}" target="_blank">posted</a>` : ""}
+      ${f.posted_url ? `<a class="posted" href="${esc(f.posted_url)}" target="_blank" rel="noopener">posted</a>` : ""}
       <span class="loc">${esc(f.repo)}#${f.pr_number} · ${esc(f.file)}:${f.line} · ${esc(f.category)}</span></summary>
     <div class="det">
       <p>${esc(f.problem)}</p>
@@ -419,6 +539,7 @@ async function refreshHistory() {
 $("#history").addEventListener("change", async e => {
   const name = e.target.value; if (!name) return;
   if (es) es.close();
+  field.setLive(false);
   const r = await fetch("/api/session?name=" + encodeURIComponent(name));
   const data = await r.json();
   run = { id: null, groups: [{ index: 0, label: data.findings.label || name, status: "done", session: name,
