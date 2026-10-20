@@ -14,7 +14,7 @@ tools are `gh`, `git`, and `claude`.
 - `prompts/hunt.md`, `prompts/verify.md`: the two prompts sent to `claude -p`.
 - `SPEC.md`: software requirements specification, numbered FR/NFR requirements with acceptance and verification. Read it before changing behavior.
 - `ARCHITECTURE.md`: diagrams and data shapes. Read it before changing anything.
-- `README.md`: usage and flags.
+- `README.md`: starting and using the web UI, accepted PR forms, env vars. CLI flags live in the `--help` text in `bin/advreview.js`.
 - `reviews/`: output sessions. Never edit by hand, never commit.
 
 ## Keep SPEC.md and ARCHITECTURE.md in sync
@@ -37,7 +37,7 @@ changed:
 | New file written to or read from the session dir | §7 Session directory |
 | New or changed HTTP endpoint, SSE event kind, or UI pane | §8 Web UI |
 | A design decision reversed or a new one introduced | §9 Why these choices |
-| New flag or env var | README.md flags table, and the section above that the flag affects |
+| New flag or env var | `--help` text in `bin/advreview.js`; README.md env var table if the UI honours it; and the section above that the flag affects |
 | Any requirement added, removed, or changed in meaning (new behavior, removed option, different default, new guarantee) | SPEC.md: add, retire, or reword the FR/NFR, keep IDs stable, update §6 verification and §7 open items |
 
 Rules:
